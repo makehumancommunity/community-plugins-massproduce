@@ -7,6 +7,7 @@ import gui
 from core import G
 
 from .randomizeaction import RandomizeAction
+from .randomizationsettings import RandomizationSettings
 from .humanstate import HumanState
 
 mhapi = gui3d.app.mhapi
@@ -30,16 +31,61 @@ class MassProduceTaskView(gui3d.TaskView):
 
         self.log = mhapi.utility.getLogChannel("massproduce")
 
-        self._setupLeftPanel()
-        self._setupMainPanel()
-        self._setupRightPanel()
+        self.randomizationSettings = RandomizationSettings()
 
-    def _setupLeftPanel(self):
-        self.addLeftWidget( self._createMacroSettings() )
+        self._setupLeftPanel(self.randomizationSettings)
+        self._setupMainPanel(self.randomizationSettings)
+        self._setupRightPanel(self.randomizationSettings)
+
+    def _setupLeftPanel(self, r):
+        self.addLeftWidget( self._createMacroSettings(r) )
         self.addLeftWidget(mhapi.ui.createLabel())
-        self.addLeftWidget( self._createModelingSettings() )
+        self.addLeftWidget( self._createModelingSettings(r) )
 
-    def _setupAllowedSkinsTables(self, layout):
+    def _setupMainPanel(self, r):
+
+        self.mainSettingsPanel = QWidget()
+        self.mainSettingsLayout = QVBoxLayout()
+
+        self._setupRandomizeProxies(self.mainSettingsLayout, r)
+        self._setupRandomizeMaterials(self.mainSettingsLayout, r)
+        self._setupAllowedSkinsTables(self.mainSettingsLayout, r)
+
+        self.mainSettingsLayout.addStretch()
+        self.mainSettingsPanel.setLayout(self.mainSettingsLayout)
+
+        self.mainScroll = QScrollArea()
+        self.mainScroll.setWidget(self.mainSettingsPanel)
+        self.mainScroll.setWidgetResizable(True)
+
+        self.addTopWidget(self.mainScroll)
+
+    def _setupRightPanel(self, r):
+        self.addRightWidget(self._createExportSettings(r))
+        self.addRightWidget(mhapi.ui.createLabel())
+        self.addRightWidget(self._createProducePanel(r))
+
+    def _setupRandomizeMaterials(self, layout, r):
+        layout.addWidget(mhapi.ui.createLabel("Randomize materials:"))
+        layout.addWidget(r.addUI("materials", "randomizeSkinMaterials", mhapi.ui.createCheckBox(label="Randomize skins", selected=True)))
+        layout.addWidget(r.addUI("materials", "randomizeHairMaterials", mhapi.ui.createCheckBox(label="Randomize hair material", selected=True)))
+        layout.addWidget(r.addUI("materials", "randomizeClothesMaterials", mhapi.ui.createCheckBox(label="Randomize clothes material", selected=True)))
+        layout.addWidget(mhapi.ui.createLabel())
+
+    def _setupRandomizeProxies(self, layout, r):
+        layout.addWidget(mhapi.ui.createLabel("Randomize clothes and body parts:"))
+        layout.addWidget(r.addUI("proxies", "hair", mhapi.ui.createCheckBox(label="Randomize hair", selected=True)))
+        layout.addWidget(r.addUI("proxies", "eyelashes", mhapi.ui.createCheckBox(label="Randomize eyelashes", selected=True)))
+        layout.addWidget(r.addUI("proxies", "eyebrows", mhapi.ui.createCheckBox(label="Randomize eyebrows", selected=True)))
+        layout.addWidget(r.addUI("proxies", "upperClothes", mhapi.ui.createCheckBox(label="Randomize upper / full body clothes", selected=True)))
+        layout.addWidget(r.addUI("proxies", "lowerClothes", mhapi.ui.createCheckBox(label="Randomize lower body clothes", selected=True)))
+        layout.addWidget(r.addUI("proxies", "shoes", mhapi.ui.createCheckBox(label="Randomize shoes", selected=True)))
+        layout.addWidget(mhapi.ui.createLabel())
+
+    def _generalMainTableSettings(self, table):
+        table.setMinimumHeight(300)
+
+    def _setupAllowedSkinsTables(self, layout, r):
 
 
         sysSkins = mhapi.assets.getAvailableSystemSkins()
@@ -80,11 +126,13 @@ class MassProduceTaskView(gui3d.TaskView):
         self.allowedFemaleSkinsTable.setRowCount(len(skinBaseNames))
         self.allowedFemaleSkinsTable.setColumnCount(5)
         self.allowedFemaleSkinsTable.setHorizontalHeaderLabels(["Skin", "Mixed", "African", "Asian", "Caucasian"])
+        self._generalMainTableSettings(self.allowedFemaleSkinsTable)
 
         self.allowedMaleSkinsTable = QTableWidget()
         self.allowedMaleSkinsTable.setRowCount(len(skinBaseNames))
         self.allowedMaleSkinsTable.setColumnCount(5)
         self.allowedMaleSkinsTable.setHorizontalHeaderLabels(["Skin", "Mixed", "African", "Asian", "Caucasian"])
+        self._generalMainTableSettings(self.allowedMaleSkinsTable)
 
         skins = dict()
 
@@ -97,20 +145,22 @@ class MassProduceTaskView(gui3d.TaskView):
             self.allowedFemaleSkinsTable.setItem(i, 0, QTableWidgetItem(n))
             self.allowedMaleSkinsTable.setItem(i, 0, QTableWidgetItem(n))
 
-            male["mixed"] = mhapi.ui.createCheckBox("")
-            male["african"] = mhapi.ui.createCheckBox("")
-            male["asian"] = mhapi.ui.createCheckBox("")
-            male["caucasian"] = mhapi.ui.createCheckBox("")
+            male["mixed"] = r.addUI("allowedMaleSkins",n,mhapi.ui.createCheckBox(""),subName="mixed")
+            male["african"] = r.addUI("allowedMaleSkins",n,mhapi.ui.createCheckBox(""),subName="african")
+            male["asian"] = r.addUI("allowedMaleSkins",n,mhapi.ui.createCheckBox(""),subName="asian")
+            male["caucasian"] = r.addUI("allowedMaleSkins",n,mhapi.ui.createCheckBox(""),subName="caucasian")
+            r.addUI("allowedMaleSkins", n, allowedMaleSkins[n]["fullPath"], subName="fullPath")
 
             self.allowedMaleSkinsTable.setCellWidget(i, 1, male["mixed"])
             self.allowedMaleSkinsTable.setCellWidget(i, 2, male["african"])
             self.allowedMaleSkinsTable.setCellWidget(i, 3, male["asian"])
             self.allowedMaleSkinsTable.setCellWidget(i, 4, male["caucasian"])
 
-            female["mixed"] = mhapi.ui.createCheckBox("")
-            female["african"] = mhapi.ui.createCheckBox("")
-            female["asian"] = mhapi.ui.createCheckBox("")
-            female["caucasian"] = mhapi.ui.createCheckBox("")
+            female["mixed"] = r.addUI("allowedFemaleSkins",n,mhapi.ui.createCheckBox(""),subName="mixed")
+            female["african"] = r.addUI("allowedFemaleSkins",n,mhapi.ui.createCheckBox(""),subName="african")
+            female["asian"] = r.addUI("allowedFemaleSkins",n,mhapi.ui.createCheckBox(""),subName="asian")
+            female["caucasian"] = r.addUI("allowedFemaleSkins",n,mhapi.ui.createCheckBox(""),subName="caucasian")
+            r.addUI("allowedFemaleSkins", n, allowedFemaleSkins[n]["fullPath"], subName="fullPath")
 
             self.allowedFemaleSkinsTable.setCellWidget(i, 1, female["mixed"])
             self.allowedFemaleSkinsTable.setCellWidget(i, 2, female["african"])
@@ -176,38 +226,18 @@ class MassProduceTaskView(gui3d.TaskView):
 
         return True
 
-    def _setupMainPanel(self):
 
-        self.tableData = dict()
 
-        self.mainSettingsPanel = QWidget()
-        self.mainSettingsLayout = QVBoxLayout()
-
-        self.testWidget = QTableWidget()
-        self.testWidget.setRowCount(5)
-        self.testWidget.setColumnCount(3)
-
-        self._setupAllowedSkinsTables(self.mainSettingsLayout)
-
-        self.mainSettingsLayout.addStretch()
-        self.mainSettingsPanel.setLayout(self.mainSettingsLayout)
-        self.addTopWidget(self.mainSettingsPanel)
-
-    def _setupRightPanel(self):
-        self.addRightWidget(self._createExportSettings())
-        self.addRightWidget(mhapi.ui.createLabel())
-        self.addRightWidget(self._createProducePanel())
-
-    def _createExportSettings(self):
+    def _createExportSettings(self, r):
         self.exportPanel = mhapi.ui.createGroupBox("Export settings")
         self.exportPanel.addWidget(mhapi.ui.createLabel("File name base"))
-        self.fnbase = self.exportPanel.addWidget(mhapi.ui.createTextEdit("mass"))
+        r.addUI("output", "fnbase", self.exportPanel.addWidget(mhapi.ui.createTextEdit("mass")))
         self.exportPanel.addWidget(mhapi.ui.createLabel(""))
 
         data = ["MHM","OBJ","MHX","FBX","DAE"]
 
         self.exportPanel.addWidget(mhapi.ui.createLabel("File format"))
-        self.fileformat = self.exportPanel.addWidget(mhapi.ui.createComboBox(data=data))
+        r.addUI("output", "fileformat", self.exportPanel.addWidget(mhapi.ui.createComboBox(data=data)))
 
         info = "\nFiles end up in the\n"
         info +="usual directory, named\n"
@@ -219,11 +249,11 @@ class MassProduceTaskView(gui3d.TaskView):
 
         return self.exportPanel
 
-    def _createProducePanel(self):
+    def _createProducePanel(self, r):
         self.producePanel = mhapi.ui.createGroupBox("Produce")
 
         self.producePanel.addWidget(mhapi.ui.createLabel("Number of characters"))
-        self.numfiles = self.producePanel.addWidget(mhapi.ui.createTextEdit("2"))
+        r.addUI("output", "numfiles", self.producePanel.addWidget(mhapi.ui.createTextEdit("2")))
         self.producePanel.addWidget(mhapi.ui.createLabel(""))
         self.produceButton = self.producePanel.addWidget(mhapi.ui.createButton("Produce"))
 
@@ -233,178 +263,79 @@ class MassProduceTaskView(gui3d.TaskView):
 
         return self.producePanel
 
-    def _createModelingSettings(self):
+    def _createModelingSettings(self, r):
         self.modelingPanel = mhapi.ui.createGroupBox("Modeling settings")
 
-        self.head = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize head", selected=True))
-        self.face = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize face", selected=True))
-        self.torso = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize torso", selected=True))
-        self.stomach = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize stomach", selected=True))
-        self.buttocks = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize buttocks", selected=True))
-        self.pelvis = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize pelvis", selected=True))
-        self.arms = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize arms", selected=False))
-        self.hands = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize hands", selected=False))
-        self.legs = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize legs", selected=False))
-        self.feet = self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize feet", selected=False))
+        r.addUI("modeling", "head", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize head", selected=True)))
+        r.addUI("modeling", "face", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize face", selected=True)))
+        r.addUI("modeling", "torso", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize torso", selected=True)))
+        r.addUI("modeling", "stomach", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize stomach", selected=True)))
+        r.addUI("modeling", "buttocks", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize buttocks", selected=True)))
+        r.addUI("modeling", "pelvis", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize pelvis", selected=True)))
+        r.addUI("modeling", "arms", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize arms", selected=False)))
+        r.addUI("modeling", "hands", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize hands", selected=False)))
+        r.addUI("modeling", "legs", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize legs", selected=False)))
+        r.addUI("modeling", "feet", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize feet", selected=False)))
 
         self.modelingPanel.addWidget(mhapi.ui.createLabel())
-        self.maxdev = self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.3, min=0.0, max=1.0, label="Max deviation from default"))
+        r.addUI("modeling", "maxdev", self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.3, min=0.0, max=1.0, label="Max deviation from default")))
 
         self.modelingPanel.addWidget(mhapi.ui.createLabel())
-        self.symmetry = self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.7, min=0.0, max=1.0, label="Symmetry"))
+        r.addUI("modeling", "symmetry", self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.7, min=0.0, max=1.0, label="Symmetry")))
 
         return self.modelingPanel
 
-    def _createMacroSettings(self):
+    def _createMacroSettings(self, r):
         self.macroPanel = mhapi.ui.createGroupBox("Macro settings")
 
-        self.randomizeAge = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize age", selected=True))
-        self.ageMinimum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum age", value=0.45))
-        self.ageMaximum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum age", value=0.95))
+        r.addUI("macro", "randomizeAge", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize age", selected=True)))
+        r.addUI("macro", "ageMinimum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum age", value=0.45)))
+        r.addUI("macro", "ageMaximum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum age", value=0.95)))
 
         self.macroPanel.addWidget(mhapi.ui.createLabel())
 
-        self.randomizeWeight = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize weight", selected=True))
-        self.weightMinimum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum weight", value=0.1))
-        self.weightMaximum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum weight", value=0.9))
+        r.addUI("macro", "randomizeWeight", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize weight", selected=True)))
+        r.addUI("macro", "weightMinimum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum weight", value=0.1)))
+        r.addUI("macro", "weightMaximum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum weight", value=0.9)))
 
         self.macroPanel.addWidget(mhapi.ui.createLabel())
 
-        self.randomizeHeight = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize height", selected=True))
-        self.heightMinimum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum height", value=0.2))
-        self.heightMaximum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum height", value=0.9))
+        r.addUI("macro", "randomizeHeight", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize height", selected=True)))
+        r.addUI("macro", "heightMinimum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum height", value=0.2)))
+        r.addUI("macro", "heightMaximum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum height", value=0.9)))
 
         self.macroPanel.addWidget(mhapi.ui.createLabel())
 
-        self.randomizeMuscle = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize muscle", selected=True))
-        self.muscleMinimum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum muscle", value=0.3))
-        self.muscleMaximum = self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum muscle", value=0.8))
+        r.addUI("macro", "randomizeMuscle", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize muscle", selected=True)))
+        r.addUI("macro", "muscleMinimum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Minimum muscle", value=0.3)))
+        r.addUI("macro", "muscleMaximum", self.macroPanel.addWidget(mhapi.ui.createSlider(label="Maximum muscle", value=0.8)))
 
         self.macroPanel.addWidget(mhapi.ui.createLabel())
 
-        self.gender = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize gender", selected=True))
-        self.genderabsolute = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Absolute gender", selected=True))
+        r.addUI("macro", "gender", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize gender", selected=True)))
+        r.addUI("macro", "genderabsolute", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Absolute gender", selected=True)))
 
         self.macroPanel.addWidget(mhapi.ui.createLabel())
 
-        self.ethnicity = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize ethnicity", selected=True))
-        self.ethnicityabsolute = self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Absolute ethnicity", selected=True))
+        r.addUI("macro", "ethnicity", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize ethnicity", selected=True)))
+        r.addUI("macro", "ethnicityabsolute", self.macroPanel.addWidget(mhapi.ui.createCheckBox(label="Absolute ethnicity", selected=True)))
 
         return self.macroPanel
-
-    def _generateSettingsHash(self):
-        settings = dict()
-
-        # Macro
-        macro = dict()
-
-        macro["randomizeAge"] = self.randomizeAge.selected
-        macro["ageMinimum"] = self.ageMinimum.getValue()
-        macro["ageMaximum"] = self.ageMaximum.getValue()
-
-        macro["randomizeWeight"] = self.randomizeWeight.selected
-        macro["weightMinimum"] = self.weightMinimum.getValue()
-        macro["weightMaximum"] = self.weightMaximum.getValue()
-
-        macro["randomizeHeight"] = self.randomizeHeight.selected
-        macro["heightMinimum"] = self.heightMinimum.getValue()
-        macro["heightMaximum"] = self.heightMaximum.getValue()
-
-        macro["randomizeMuscle"] = self.randomizeMuscle.selected
-        macro["muscleMinimum"] = self.muscleMinimum.getValue()
-        macro["muscleMaximum"] = self.muscleMaximum.getValue()
-
-        macro["gender"] = self.gender.selected
-        macro["genderabsolute"] = self.genderabsolute.selected
-        macro["ethnicity"] = self.ethnicity.selected
-        macro["ethnicityabsolute"] = self.ethnicityabsolute.selected
-
-        settings["macro"] = macro
-
-        # Modeling
-
-        modeling = dict()
-
-        modeling["head"] = self.head.selected
-        modeling["face"] = self.face.selected
-        modeling["torso"] = self.torso.selected
-        modeling["stomach"] = self.stomach.selected
-        modeling["buttocks"] = self.buttocks.selected
-        modeling["pelvis"] = self.pelvis.selected
-        modeling["arms"] = self.arms.selected
-        modeling["hands"] = self.hands.selected
-        modeling["legs"] = self.legs.selected
-        modeling["feet"] = self.feet.selected
-
-        modeling["maxdev"] = self.maxdev.getValue()
-        modeling["symmetry"] = self.symmetry.getValue()
-
-        settings["modeling"] = modeling
-
-        # Output
-
-        output = dict()
-
-        num = 1
-        try:
-            num = int(self.numfiles.text)
-        except:
-            pass
-
-        output["numfiles"] = num
-        output["fnbase"] = self.fnbase.text
-        output["format"] = str(self.fileformat.getCurrentItem())
-
-        settings["output"] = output
-
-        # Skins
-
-        femaleSkins = dict()
-
-        for name in self.allowedFemaleSkins.keys():
-            skinUI = self.allowedFemaleSkins[name]
-            skinSettings = dict()
-            skinSettings["fullPath"] = skinUI["fullPath"]
-            skinSettings["mixed"] = skinUI["mixed"].selected
-            skinSettings["african"] = skinUI["african"].selected
-            skinSettings["asian"] = skinUI["asian"].selected
-            skinSettings["caucasian"] = skinUI["caucasian"].selected
-            femaleSkins[name] = skinSettings
-
-        maleSkins = dict()
-
-        for name in self.allowedMaleSkins.keys():
-            skinUI = self.allowedMaleSkins[name]
-            skinSettings = dict()
-            skinSettings["fullPath"] = skinUI["fullPath"]
-            skinSettings["mixed"] = skinUI["mixed"].selected
-            skinSettings["african"] = skinUI["african"].selected
-            skinSettings["asian"] = skinUI["asian"].selected
-            skinSettings["caucasian"] = skinUI["caucasian"].selected
-            maleSkins[name] = skinSettings
-
-        settings["materials"] = dict()
-        settings["materials"]["femaleSkins"] = femaleSkins
-        settings["materials"]["maleSkins"] = maleSkins
-
-        return settings
 
     def _onProduceClick(self):
         print("Produce")
 
-        settings = self._generateSettingsHash()
-
-        pp.pprint(settings)
+        self.randomizationSettings.dumpValues()
 
         self.initialState = HumanState()
 
-        i = settings["output"]["numfiles"]
-        base = settings["output"]["fnbase"]
+        i = int(self.randomizationSettings.getValue("output","numfiles"))
+        base = self.randomizationSettings.getValue("output","fnbase")
 
         while i > 0:
-            self.nextState = HumanState(settings)
+            self.nextState = HumanState(self.randomizationSettings)
             self.nextState.applyState(False)
-            format = settings["output"]["format"]
+            format = self.randomizationSettings.getValue("output","fileformat")
             name = base + str(i).rjust(4,"0")
 
             if format == "MHM":

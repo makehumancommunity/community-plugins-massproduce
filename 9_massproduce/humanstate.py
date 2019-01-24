@@ -36,7 +36,8 @@ class HumanState():
 
         if not settings is None:
             self._randomizeMacros()
-            self._randomizeSkin()
+            if settings.getValue("materials", "randomizeSkinMaterials"):
+                self._randomizeSkin()
 
         print("MACRO:\n")
         pp.pprint(self.macroModifierValues)
@@ -80,34 +81,34 @@ class HumanState():
 
     def _randomizeMacros(self):
 
-        if self.settings["macro"]["randomizeAge"]:
-            min = self.settings["macro"]["ageMinimum"]
-            max = self.settings["macro"]["ageMaximum"]
+        if self.settings.getValue("macro","randomizeAge"):
+            min = self.settings.getValue("macro", "ageMinimum")
+            max = self.settings.getValue("macro", "ageMaximum")
             self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["age"], min, max)
 
-        if self.settings["macro"]["randomizeWeight"]:
-            min = self.settings["macro"]["weightMinimum"]
-            max = self.settings["macro"]["weightMaximum"]
+        if self.settings.getValue("macro", "randomizeWeight"):
+            min = self.settings.getValue("macro", "weightMinimum")
+            max = self.settings.getValue("macro", "weightMaximum")
             self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["weight"], min, max)
 
-        if self.settings["macro"]["randomizeHeight"]:
-            min = self.settings["macro"]["heightMinimum"]
-            max = self.settings["macro"]["heightMaximum"]
+        if self.settings.getValue("macro", "randomizeHeight"):
+            min = self.settings.getValue("macro", "heightMinimum")
+            max = self.settings.getValue("macro", "heightMaximum")
             self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["height"], min, max)
 
-        if self.settings["macro"]["randomizeMuscle"]:
-            min = self.settings["macro"]["muscleMinimum"]
-            max = self.settings["macro"]["muscleMaximum"]
+        if self.settings.getValue("macro", "randomizeMuscle"):
+            min = self.settings.getValue("macro", "muscleMinimum")
+            max = self.settings.getValue("macro", "muscleMaximum")
             self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["muscle"], min, max)
 
-        if self.settings["macro"]["ethnicity"]:
-            if self.settings["macro"]["ethnicityabsolute"]:
+        if self.settings.getValue("macro", "ethnicity"):
+            if self.settings.getValue("macro", "ethnicityabsolute"):
                 self._pickOne(self.macroModifierValues, MACROGROUPS["ethnicity"])
             else:
                 self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["ethnicity"], 0.0, 1.0)
 
-        if self.settings["macro"]["gender"]:
-            if self.settings["macro"]["genderabsolute"]:
+        if self.settings.getValue("macro", "gender"):
+            if self.settings.getValue("macro", "genderabsolute"):
                 self._dichotomous(self.macroModifierValues, MACROGROUPS["gender"])
             else:
                 self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["gender"], 0.0, 1.0)
@@ -136,13 +137,16 @@ class HumanState():
 
         skinHash = None
         if gender == "female":
-            skinHash = self.settings["materials"]["femaleSkins"]
+            category = "allowedFemaleSkins"
         else:
-            skinHash = self.settings["materials"]["maleSkins"]
+            category = "allowedMaleSkins"
+
+        print(ethnicity)
 
         matchingSkins = []
-        for uiname in skinHash.keys():
-            skin = skinHash[uiname]
+        for name in self.settings.getNames(category):
+            skin = self.settings.getValueHash(category, name)
+            print(skin)
             if skin[ethnicity]:
                 matchingSkins.append(skin["fullPath"])
         print("\nGENDER IS: " + gender)
