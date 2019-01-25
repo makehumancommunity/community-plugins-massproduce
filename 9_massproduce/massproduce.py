@@ -476,7 +476,7 @@ class MassProduceTaskView(gui3d.TaskView):
         self.producePanel = mhapi.ui.createGroupBox("Produce")
 
         self.producePanel.addWidget(mhapi.ui.createLabel("Number of characters"))
-        r.addUI("output", "numfiles", self.producePanel.addWidget(mhapi.ui.createTextEdit("2")))
+        r.addUI("output", "numfiles", self.producePanel.addWidget(mhapi.ui.createTextEdit("5")))
         self.producePanel.addWidget(mhapi.ui.createLabel(""))
         self.produceButton = self.producePanel.addWidget(mhapi.ui.createButton("Produce"))
 
