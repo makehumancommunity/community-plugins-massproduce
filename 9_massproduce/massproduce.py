@@ -9,6 +9,7 @@ from core import G
 from .randomizeaction import RandomizeAction
 from .randomizationsettings import RandomizationSettings
 from .humanstate import HumanState
+from .modifiergroups import ModifierInfo
 
 mhapi = gui3d.app.mhapi
 
@@ -489,17 +490,16 @@ class MassProduceTaskView(gui3d.TaskView):
     def _createModelingSettings(self, r):
         self.modelingPanel = mhapi.ui.createGroupBox("Modeling settings")
 
-        r.addUI("modeling", "head", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize head", selected=True)))
-        r.addUI("modeling", "face", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize face", selected=True)))
-        r.addUI("modeling", "torso", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize torso", selected=True)))
-        r.addUI("modeling", "breasts", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize breasts (if fem)", selected=True)))
-        r.addUI("modeling", "stomach", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize stomach", selected=True)))
-        r.addUI("modeling", "buttocks", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize buttocks", selected=True)))
-        r.addUI("modeling", "pelvis", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize pelvis", selected=True)))
-        r.addUI("modeling", "arms", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize arms", selected=False)))
-        r.addUI("modeling", "hands", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize hands", selected=False)))
-        r.addUI("modeling", "legs", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize legs", selected=False)))
-        r.addUI("modeling", "feet", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize feet", selected=False)))
+        defaultUnchecked = ["arms","hands","legs","feet"]
+
+        mfi = ModifierInfo()
+        gn = mfi.getModifierGroupNames()
+        for n in gn:
+            sel = not n in defaultUnchecked
+            label = n
+            if n == "breast":
+                label = "breasts (if fem)"
+            r.addUI("modeling", n, self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize " + label, selected=sel)))
 
         self.modelingPanel.addWidget(mhapi.ui.createLabel())
         r.addUI("modeling", "maxdev", self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.3, min=0.0, max=1.0, label="Max deviation from default")))
