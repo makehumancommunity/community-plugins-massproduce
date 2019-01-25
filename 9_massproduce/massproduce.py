@@ -51,6 +51,8 @@ class MassProduceTaskView(gui3d.TaskView):
         self._setupRandomizeMaterials(self.mainSettingsLayout, r)
         self._setupAllowedSkinsTables(self.mainSettingsLayout, r)
         self._setupAllowedHairTable(self.mainSettingsLayout, r)
+        self._setupAllowedEyebrowsTable(self.mainSettingsLayout, r)
+        self._setupAllowedEyelashesTable(self.mainSettingsLayout, r)
 
         self.mainSettingsLayout.addStretch()
         self.mainSettingsPanel.setLayout(self.mainSettingsLayout)
@@ -172,6 +174,142 @@ class MassProduceTaskView(gui3d.TaskView):
         layout.addWidget(mhapi.ui.createLabel(""))
         layout.addWidget(mhapi.ui.createLabel("Allowed hair:"))
         layout.addWidget(self.allowedHairTable)
+
+    def _setupAllowedEyebrowsTable(self, layout, r):
+        sysEyebrows = mhapi.assets.getAvailableSystemEyebrows()
+        userEyebrows = mhapi.assets.getAvailableUserEyebrows()
+
+        eyebrows = []
+        eyebrows.extend(sysEyebrows)
+        eyebrows.extend(userEyebrows)
+
+        eyebrowsInfo = dict()
+
+        for fullPath in eyebrows:
+            bn = os.path.basename(fullPath).lower()
+            bn = re.sub(r'.mhclo', '', bn)
+            bn = re.sub(r'.mhpxy', '', bn)
+            bn = re.sub(r'_', ' ', bn)
+            bn = bn.strip()
+
+            eyebrowsName = bn
+
+            if not eyebrowsName in eyebrowsInfo:
+                eyebrowsInfo[eyebrowsName] = dict()
+                eyebrowsInfo[eyebrowsName]["fullPath"] = fullPath
+
+                allowMixed = True
+                allowFemale = True
+                allowMale = True
+
+                # TODO: Check if any eyebrows look gender specific
+
+                eyebrowsInfo[eyebrowsName]["allowMixed"] = allowMixed
+                eyebrowsInfo[eyebrowsName]["allowFemale"] = allowFemale
+                eyebrowsInfo[eyebrowsName]["allowMale"] = allowMale
+
+        eyebrowsNames = list(eyebrowsInfo.keys())
+        eyebrowsNames.sort()
+
+        self.allowedEyebrowsTable = QTableWidget()
+        self.allowedEyebrowsTable.setRowCount(len(eyebrowsNames))
+        self.allowedEyebrowsTable.setColumnCount(4)
+        self.allowedEyebrowsTable.setHorizontalHeaderLabels(["Eyebrows", "Mixed", "Female", "Male"])
+
+        i = 0
+        for eyebrowsName in eyebrowsNames:
+            eyebrowsSettings = eyebrowsInfo[eyebrowsName]
+            eyebrowsWidgets = dict()
+
+            self.allowedEyebrowsTable.setItem(i, 0, QTableWidgetItem(eyebrowsName))
+            eyebrowsWidgets["mixed"] = r.addUI("allowedEyebrows", eyebrowsName, mhapi.ui.createCheckBox(""), subName="mixed")
+            eyebrowsWidgets["female"] = r.addUI("allowedEyebrows", eyebrowsName, mhapi.ui.createCheckBox(""), subName="female")
+            eyebrowsWidgets["male"] = r.addUI("allowedEyebrows", eyebrowsName, mhapi.ui.createCheckBox(""), subName="male")
+            r.addUI("allowedEyebrows", eyebrowsName, eyebrowsSettings["fullPath"], subName="fullPath")
+
+            self.allowedEyebrowsTable.setCellWidget(i, 1, eyebrowsWidgets["mixed"])
+            self.allowedEyebrowsTable.setCellWidget(i, 2, eyebrowsWidgets["female"])
+            self.allowedEyebrowsTable.setCellWidget(i, 3, eyebrowsWidgets["male"])
+
+            eyebrowsWidgets["mixed"].setChecked(eyebrowsSettings["allowMixed"])
+            eyebrowsWidgets["female"].setChecked(eyebrowsSettings["allowFemale"])
+            eyebrowsWidgets["male"].setChecked(eyebrowsSettings["allowMale"])
+
+            i = i + 1
+
+        self._generalMainTableSettings(self.allowedEyebrowsTable)
+
+        layout.addWidget(mhapi.ui.createLabel(""))
+        layout.addWidget(mhapi.ui.createLabel("Allowed eyebrows:"))
+        layout.addWidget(self.allowedEyebrowsTable)
+
+    def _setupAllowedEyelashesTable(self, layout, r):
+        sysEyelashes = mhapi.assets.getAvailableSystemEyelashes()
+        userEyelashes = mhapi.assets.getAvailableUserEyelashes()
+
+        eyelashes = []
+        eyelashes.extend(sysEyelashes)
+        eyelashes.extend(userEyelashes)
+
+        eyelashesInfo = dict()
+
+        for fullPath in eyelashes:
+            bn = os.path.basename(fullPath).lower()
+            bn = re.sub(r'.mhclo', '', bn)
+            bn = re.sub(r'.mhpxy', '', bn)
+            bn = re.sub(r'_', ' ', bn)
+            bn = bn.strip()
+
+            eyelashesName = bn
+
+            if not eyelashesName in eyelashesInfo:
+                eyelashesInfo[eyelashesName] = dict()
+                eyelashesInfo[eyelashesName]["fullPath"] = fullPath
+
+                allowMixed = True
+                allowFemale = True
+                allowMale = True
+
+                # TODO: Check if any eyelashes look gender specific
+
+                eyelashesInfo[eyelashesName]["allowMixed"] = allowMixed
+                eyelashesInfo[eyelashesName]["allowFemale"] = allowFemale
+                eyelashesInfo[eyelashesName]["allowMale"] = allowMale
+
+        eyelashesNames = list(eyelashesInfo.keys())
+        eyelashesNames.sort()
+
+        self.allowedEyelashesTable = QTableWidget()
+        self.allowedEyelashesTable.setRowCount(len(eyelashesNames))
+        self.allowedEyelashesTable.setColumnCount(4)
+        self.allowedEyelashesTable.setHorizontalHeaderLabels(["Eyelashes", "Mixed", "Female", "Male"])
+
+        i = 0
+        for eyelashesName in eyelashesNames:
+            eyelashesSettings = eyelashesInfo[eyelashesName]
+            eyelashesWidgets = dict()
+
+            self.allowedEyelashesTable.setItem(i, 0, QTableWidgetItem(eyelashesName))
+            eyelashesWidgets["mixed"] = r.addUI("allowedEyelashes", eyelashesName, mhapi.ui.createCheckBox(""), subName="mixed")
+            eyelashesWidgets["female"] = r.addUI("allowedEyelashes", eyelashesName, mhapi.ui.createCheckBox(""), subName="female")
+            eyelashesWidgets["male"] = r.addUI("allowedEyelashes", eyelashesName, mhapi.ui.createCheckBox(""), subName="male")
+            r.addUI("allowedEyelashes", eyelashesName, eyelashesSettings["fullPath"], subName="fullPath")
+
+            self.allowedEyelashesTable.setCellWidget(i, 1, eyelashesWidgets["mixed"])
+            self.allowedEyelashesTable.setCellWidget(i, 2, eyelashesWidgets["female"])
+            self.allowedEyelashesTable.setCellWidget(i, 3, eyelashesWidgets["male"])
+
+            eyelashesWidgets["mixed"].setChecked(eyelashesSettings["allowMixed"])
+            eyelashesWidgets["female"].setChecked(eyelashesSettings["allowFemale"])
+            eyelashesWidgets["male"].setChecked(eyelashesSettings["allowMale"])
+
+            i = i + 1
+
+        self._generalMainTableSettings(self.allowedEyelashesTable)
+
+        layout.addWidget(mhapi.ui.createLabel(""))
+        layout.addWidget(mhapi.ui.createLabel("Allowed eyelashes:"))
+        layout.addWidget(self.allowedEyelashesTable)
 
 
     def _setupAllowedSkinsTables(self, layout, r):

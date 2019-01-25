@@ -171,12 +171,43 @@ class HumanState():
         print("PICKED HAIR: " + fullPath)
         self.hair = fullPath
 
+    def _findEyebrowsForGender(self, gender):
+
+        eyebrowsNames = self.settings.getNames("allowedEyebrows")
+        allowedEyebrows = []
+        for eyebrowsName in eyebrowsNames:
+            allowed = self.settings.getValue("allowedEyebrows", eyebrowsName, gender)
+            if allowed:
+                allowedEyebrows.append(eyebrowsName)
+
+        pick = random.randrange(len(allowedEyebrows))
+        return self.settings.getValue("allowedEyebrows",allowedEyebrows[pick],"fullPath")
 
     def _randomizeEyebrows(self):
-        pass
+        gender = self._getCurrentGender()
+        fullPath = self._findEyebrowsForGender(gender)
+        print("PICKED EYEBROWS: " + fullPath)
+        self.eyebrows = fullPath
+
+
+    def _findEyelashesForGender(self, gender):
+
+        eyelashesNames = self.settings.getNames("allowedEyelashes")
+        allowedEyelashes = []
+        for eyelashesName in eyelashesNames:
+            allowed = self.settings.getValue("allowedEyelashes", eyelashesName, gender)
+            if allowed:
+                allowedEyelashes.append(eyelashesName)
+
+        pick = random.randrange(len(allowedEyelashes))
+        return self.settings.getValue("allowedEyelashes",allowedEyelashes[pick],"fullPath")
 
     def _randomizeEyelashes(self):
-        pass
+        gender = self._getCurrentGender()
+        fullPath = self._findEyelashesForGender(gender)
+        print("PICKED EYEBROWS: " + fullPath)
+        self.eyelashes = fullPath
+
 
     def _randomizeUpperClothes(self):
         pass
@@ -190,6 +221,10 @@ class HumanState():
     def _randomizeProxies(self):
         if self.settings.getValue("proxies","hair"):
             self._randomizeHair()
+        if self.settings.getValue("proxies","eyebrows"):
+            self._randomizeEyebrows()
+        if self.settings.getValue("proxies","eyelashes"):
+            self._randomizeEyelashes()
 
     def applyState(self, assumeBodyReset=False):
 
@@ -197,6 +232,11 @@ class HumanState():
         if assumeBodyReset:
             self.human.targetsDetailStack = self.appliedTargets
         self.human.material = self.skin
+        print("\nBODYPARTS:")
+        print(self.hair)
+        print(self.eyebrows)
+        print(self.eyelashes)
+        print("\n\n")
         mhapi.assets.equipHair(self.hair)
         mhapi.assets.equipEyebrows(self.eyebrows)
         mhapi.assets.equipEyelashes(self.eyelashes)
