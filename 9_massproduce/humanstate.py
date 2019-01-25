@@ -27,10 +27,10 @@ class HumanState():
         self.macroModifierValues = dict()
         self.appliedTargets = dict(self.human.targetsDetailStack)
 
-        print("\nSKIN\n")
-
         self.skin = material.Material().copyFrom(self.human.material)
-        print(self.skin)
+        self.hair = mhapi.assets.getEquippedHair()
+        self.eyebrows = mhapi.assets.getEquippedEyebrows()
+        self.eyelashes = mhapi.assets.getEquippedEyelashes()
 
         self._fillMacroModifierValues()
 
@@ -38,12 +38,7 @@ class HumanState():
             self._randomizeMacros()
             if settings.getValue("materials", "randomizeSkinMaterials"):
                 self._randomizeSkin()
-
-        print("MACRO:\n")
-        pp.pprint(self.macroModifierValues)
-
-        print("\nTARGET:\n")
-        pp.pprint(self.appliedTargets)
+            self._randomizeProxies()
 
     def _fillMacroModifierValues(self):
         for group in MACROGROUPS.keys():
@@ -141,16 +136,12 @@ class HumanState():
         else:
             category = "allowedMaleSkins"
 
-        print(ethnicity)
-
         matchingSkins = []
         for name in self.settings.getNames(category):
             skin = self.settings.getValueHash(category, name)
             print(skin)
             if skin[ethnicity]:
                 matchingSkins.append(skin["fullPath"])
-        print("\nGENDER IS: " + gender)
-        pp.pprint(matchingSkins)
 
         pick = random.randrange(len(matchingSkins))
         self.skin = material.fromFile(matchingSkins[pick])
@@ -162,12 +153,53 @@ class HumanState():
 
         self._findSkinForEthnicityAndGender(ethnicity,gender)
 
+    def _findHairForGender(self, gender):
+
+        hairNames = self.settings.getNames("allowedHair")
+        allowedHair = []
+        for hairName in hairNames:
+            allowed = self.settings.getValue("allowedHair", hairName, gender)
+            if allowed:
+                allowedHair.append(hairName)
+
+        pick = random.randrange(len(allowedHair))
+        return self.settings.getValue("allowedHair",allowedHair[pick],"fullPath")
+
+    def _randomizeHair(self):
+        gender = self._getCurrentGender()
+        fullPath = self._findHairForGender(gender)
+        print("PICKED HAIR: " + fullPath)
+        self.hair = fullPath
+
+
+    def _randomizeEyebrows(self):
+        pass
+
+    def _randomizeEyelashes(self):
+        pass
+
+    def _randomizeUpperClothes(self):
+        pass
+
+    def _randomizeLowerClothes(self):
+        pass
+
+    def _randomizeShoes(self):
+        pass
+
+    def _randomizeProxies(self):
+        if self.settings.getValue("proxies","hair"):
+            self._randomizeHair()
+
     def applyState(self, assumeBodyReset=False):
 
         self._applyMacroModifiers()
         if assumeBodyReset:
             self.human.targetsDetailStack = self.appliedTargets
         self.human.material = self.skin
+        mhapi.assets.equipHair(self.hair)
+        mhapi.assets.equipEyebrows(self.eyebrows)
+        mhapi.assets.equipEyelashes(self.eyelashes)
 
         mhapi.modifiers._threadSafeApplyAllTargets()
 

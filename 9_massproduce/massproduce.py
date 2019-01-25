@@ -50,6 +50,7 @@ class MassProduceTaskView(gui3d.TaskView):
         self._setupRandomizeProxies(self.mainSettingsLayout, r)
         self._setupRandomizeMaterials(self.mainSettingsLayout, r)
         self._setupAllowedSkinsTables(self.mainSettingsLayout, r)
+        self._setupAllowedHairTable(self.mainSettingsLayout, r)
 
         self.mainSettingsLayout.addStretch()
         self.mainSettingsPanel.setLayout(self.mainSettingsLayout)
@@ -83,10 +84,94 @@ class MassProduceTaskView(gui3d.TaskView):
         layout.addWidget(mhapi.ui.createLabel())
 
     def _generalMainTableSettings(self, table):
-        table.setMinimumHeight(300)
+        table.setColumnWidth(0, DEFAULT_LABEL_COLUMN_WIDTH)
+        table.setMinimumHeight(DEFAULT_TABLE_HEIGHT - 50)
+        table.setMaximumHeight(DEFAULT_TABLE_HEIGHT)
+
+    def _setupAllowedHairTable(self, layout, r):
+        sysHair = mhapi.assets.getAvailableSystemHair()
+        userHair = mhapi.assets.getAvailableUserHair()
+
+        hair = []
+        hair.extend(sysHair)
+        hair.extend(userHair)
+
+        femaleOnly = [
+            "bob01",
+            "bob02",
+            "long01",
+            "braid01",
+            "ponytail01"
+        ]
+
+        maleOnly = [
+            "short02",
+            "short04"
+        ]
+
+        hairInfo = dict()
+
+        for fullPath in hair:
+            bn = os.path.basename(fullPath).lower()
+            bn = re.sub(r'.mhclo', '', bn)
+            bn = re.sub(r'_', ' ', bn)
+            bn = bn.strip()
+
+            hairName = bn
+            hairInfo[hairName] = dict()
+            hairInfo[hairName]["fullPath"] = fullPath
+
+            allowMixed = True
+            allowFemale = True
+            allowMale = True
+
+            if hairName in femaleOnly:
+                allowMale = False
+
+            if hairName in maleOnly:
+                allowFemale = False
+
+            hairInfo[hairName]["allowMixed"] = allowMixed
+            hairInfo[hairName]["allowFemale"] = allowFemale
+            hairInfo[hairName]["allowMale"] = allowMale
+
+        hairNames = list(hairInfo.keys())
+        hairNames.sort()
+
+        self.allowedHairTable = QTableWidget()
+        self.allowedHairTable.setRowCount(len(hairNames))
+        self.allowedHairTable.setColumnCount(4)
+        self.allowedHairTable.setHorizontalHeaderLabels(["Hair", "Mixed", "Female", "Male"])
+
+        i = 0
+        for hairName in hairNames:
+            hairSettings = hairInfo[hairName]
+            hairWidgets = dict()
+
+            self.allowedHairTable.setItem(i, 0, QTableWidgetItem(hairName))
+            hairWidgets["mixed"] = r.addUI("allowedHair", hairName, mhapi.ui.createCheckBox(""), subName="mixed")
+            hairWidgets["female"] = r.addUI("allowedHair", hairName, mhapi.ui.createCheckBox(""), subName="female")
+            hairWidgets["male"] = r.addUI("allowedHair", hairName, mhapi.ui.createCheckBox(""), subName="male")
+            r.addUI("allowedHair", hairName, hairSettings["fullPath"], subName="fullPath")
+
+            self.allowedHairTable.setCellWidget(i, 1, hairWidgets["mixed"])
+            self.allowedHairTable.setCellWidget(i, 2, hairWidgets["female"])
+            self.allowedHairTable.setCellWidget(i, 3, hairWidgets["male"])
+
+            hairWidgets["mixed"].setChecked(hairSettings["allowMixed"])
+            hairWidgets["female"].setChecked(hairSettings["allowFemale"])
+            hairWidgets["male"].setChecked(hairSettings["allowMale"])
+
+            i = i + 1
+
+        self._generalMainTableSettings(self.allowedHairTable)
+
+        layout.addWidget(mhapi.ui.createLabel(""))
+        layout.addWidget(mhapi.ui.createLabel("Allowed hair:"))
+        layout.addWidget(self.allowedHairTable)
+
 
     def _setupAllowedSkinsTables(self, layout, r):
-
 
         sysSkins = mhapi.assets.getAvailableSystemSkins()
         userSkins = mhapi.assets.getAvailableUserSkins()
@@ -126,13 +211,12 @@ class MassProduceTaskView(gui3d.TaskView):
         self.allowedFemaleSkinsTable.setRowCount(len(skinBaseNames))
         self.allowedFemaleSkinsTable.setColumnCount(5)
         self.allowedFemaleSkinsTable.setHorizontalHeaderLabels(["Skin", "Mixed", "African", "Asian", "Caucasian"])
-        self._generalMainTableSettings(self.allowedFemaleSkinsTable)
+
 
         self.allowedMaleSkinsTable = QTableWidget()
         self.allowedMaleSkinsTable.setRowCount(len(skinBaseNames))
         self.allowedMaleSkinsTable.setColumnCount(5)
         self.allowedMaleSkinsTable.setHorizontalHeaderLabels(["Skin", "Mixed", "African", "Asian", "Caucasian"])
-        self._generalMainTableSettings(self.allowedMaleSkinsTable)
 
         skins = dict()
 
@@ -191,8 +275,8 @@ class MassProduceTaskView(gui3d.TaskView):
 
             i = i + 1
 
-        self.allowedFemaleSkinsTable.setColumnWidth(0, DEFAULT_LABEL_COLUMN_WIDTH)
-        self.allowedMaleSkinsTable.setColumnWidth(0, DEFAULT_LABEL_COLUMN_WIDTH)
+        self._generalMainTableSettings(self.allowedFemaleSkinsTable)
+        self._generalMainTableSettings(self.allowedMaleSkinsTable)
 
         i = 1
         while i < 5:
@@ -200,8 +284,6 @@ class MassProduceTaskView(gui3d.TaskView):
             self.allowedMaleSkinsTable.setColumnWidth(i, 80)
             i = i + 1
 
-        self.allowedFemaleSkinsTable.setMaximumHeight(DEFAULT_TABLE_HEIGHT)
-        self.allowedMaleSkinsTable.setMaximumHeight(DEFAULT_TABLE_HEIGHT)
 
         layout.addWidget(mhapi.ui.createLabel("Allowed female skins:"))
         layout.addWidget(self.allowedFemaleSkinsTable)
@@ -225,7 +307,6 @@ class MassProduceTaskView(gui3d.TaskView):
                 return False
 
         return True
-
 
 
     def _createExportSettings(self, r):
@@ -269,6 +350,7 @@ class MassProduceTaskView(gui3d.TaskView):
         r.addUI("modeling", "head", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize head", selected=True)))
         r.addUI("modeling", "face", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize face", selected=True)))
         r.addUI("modeling", "torso", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize torso", selected=True)))
+        r.addUI("modeling", "breasts", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize breasts (if fem)", selected=True)))
         r.addUI("modeling", "stomach", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize stomach", selected=True)))
         r.addUI("modeling", "buttocks", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize buttocks", selected=True)))
         r.addUI("modeling", "pelvis", self.modelingPanel.addWidget(mhapi.ui.createCheckBox(label="Randomize pelvis", selected=True)))
