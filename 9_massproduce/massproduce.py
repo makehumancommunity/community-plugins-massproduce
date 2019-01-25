@@ -114,26 +114,29 @@ class MassProduceTaskView(gui3d.TaskView):
         for fullPath in hair:
             bn = os.path.basename(fullPath).lower()
             bn = re.sub(r'.mhclo', '', bn)
+            bn = re.sub(r'.mhpxy', '', bn)
             bn = re.sub(r'_', ' ', bn)
             bn = bn.strip()
 
             hairName = bn
-            hairInfo[hairName] = dict()
-            hairInfo[hairName]["fullPath"] = fullPath
 
-            allowMixed = True
-            allowFemale = True
-            allowMale = True
+            if not hairName in hairInfo:
+                hairInfo[hairName] = dict()
+                hairInfo[hairName]["fullPath"] = fullPath
 
-            if hairName in femaleOnly:
-                allowMale = False
+                allowMixed = True
+                allowFemale = True
+                allowMale = True
 
-            if hairName in maleOnly:
-                allowFemale = False
+                if hairName in femaleOnly:
+                    allowMale = False
 
-            hairInfo[hairName]["allowMixed"] = allowMixed
-            hairInfo[hairName]["allowFemale"] = allowFemale
-            hairInfo[hairName]["allowMale"] = allowMale
+                if hairName in maleOnly:
+                    allowFemale = False
+
+                hairInfo[hairName]["allowMixed"] = allowMixed
+                hairInfo[hairName]["allowFemale"] = allowFemale
+                hairInfo[hairName]["allowMale"] = allowMale
 
         hairNames = list(hairInfo.keys())
         hairNames.sort()
@@ -251,7 +254,7 @@ class MassProduceTaskView(gui3d.TaskView):
             self.allowedFemaleSkinsTable.setCellWidget(i, 3, female["asian"])
             self.allowedFemaleSkinsTable.setCellWidget(i, 4, female["caucasian"])
 
-            if self._matchesEthnicGender(n,"female"):
+            if self._matchesEthnicGender(n,"female") and not "special" in n:
 
                 female["mixed"].setChecked(True)
 
@@ -262,7 +265,7 @@ class MassProduceTaskView(gui3d.TaskView):
                 if self._matchesEthnicGender(n,ethnicity="caucasian"):
                     female["caucasian"].setChecked(True)
 
-            if self._matchesEthnicGender(n,"male") and not self._matchesEthnicGender(n,"female"):
+            if self._matchesEthnicGender(n,"male") and not self._matchesEthnicGender(n,"female") and not "special" in n:
 
                 male["mixed"].setChecked(True)
 
@@ -272,6 +275,7 @@ class MassProduceTaskView(gui3d.TaskView):
                     male["asian"].setChecked(True)
                 if self._matchesEthnicGender(n,ethnicity="caucasian"):
                     male["caucasian"].setChecked(True)
+
 
             i = i + 1
 
