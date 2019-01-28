@@ -73,8 +73,8 @@ class MassProduceTaskView(gui3d.TaskView):
     def _setupRandomizeMaterials(self, layout, r):
         layout.addWidget(mhapi.ui.createLabel("Randomize materials:"))
         layout.addWidget(r.addUI("materials", "randomizeSkinMaterials", mhapi.ui.createCheckBox(label="Randomize skins", selected=True)))
-        layout.addWidget(r.addUI("materials", "randomizeHairMaterials", mhapi.ui.createCheckBox(label="Randomize hair material", selected=True)))
-        layout.addWidget(r.addUI("materials", "randomizeClothesMaterials", mhapi.ui.createCheckBox(label="Randomize clothes material", selected=True)))
+        #layout.addWidget(r.addUI("materials", "randomizeHairMaterials", mhapi.ui.createCheckBox(label="Randomize hair material", selected=True)))
+        #layout.addWidget(r.addUI("materials", "randomizeClothesMaterials", mhapi.ui.createCheckBox(label="Randomize clothes material", selected=True)))
         layout.addWidget(mhapi.ui.createLabel())
 
     def _setupRandomizeProxies(self, layout, r):
