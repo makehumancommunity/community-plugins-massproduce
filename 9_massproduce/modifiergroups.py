@@ -65,10 +65,15 @@ class _ModifierInfo():
         # This is the value set at the point when the user starts producing,
         # rather than makehuman's standard default value
         modi["defaultValue"] = modifier.getValue()
+        modi["twosided"] = modifier.getMin() < -0.05
+        modi["leftright"] = modifier.name.startswith('l-')
         return modi
 
     def getModifierGroupNames(self):
         return list(self.nonMacroModifierGroupNames)
+
+    def getModifierInfoForGroup(self, groupName):
+        return list(self.modifierInfo[groupName])
 
 _mfinstance = None
 
