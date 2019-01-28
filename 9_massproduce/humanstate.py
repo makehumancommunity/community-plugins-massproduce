@@ -185,7 +185,6 @@ class HumanState():
         matchingSkins = []
         for name in self.settings.getNames(category):
             skin = self.settings.getValueHash(category, name)
-            print(skin)
             if skin[ethnicity]:
                 matchingSkins.append(skin["fullPath"])
 
@@ -214,7 +213,6 @@ class HumanState():
     def _randomizeHair(self):
         gender = self._getCurrentGender()
         fullPath = self._findHairForGender(gender)
-        print("PICKED HAIR: " + fullPath)
         self.hair = fullPath
 
     def _findEyebrowsForGender(self, gender):
@@ -232,7 +230,6 @@ class HumanState():
     def _randomizeEyebrows(self):
         gender = self._getCurrentGender()
         fullPath = self._findEyebrowsForGender(gender)
-        print("PICKED EYEBROWS: " + fullPath)
         self.eyebrows = fullPath
 
 
@@ -251,7 +248,6 @@ class HumanState():
     def _randomizeEyelashes(self):
         gender = self._getCurrentGender()
         fullPath = self._findEyelashesForGender(gender)
-        print("PICKED EYEBROWS: " + fullPath)
         self.eyelashes = fullPath
 
 
@@ -278,11 +274,6 @@ class HumanState():
         if assumeBodyReset:
             self.human.targetsDetailStack = self.appliedTargets
         self.human.material = self.skin
-        print("\nBODYPARTS:")
-        print(self.hair)
-        print(self.eyebrows)
-        print(self.eyelashes)
-        print("\n\n")
         mhapi.assets.equipHair(self.hair)
         mhapi.assets.equipEyebrows(self.eyebrows)
         mhapi.assets.equipEyelashes(self.eyelashes)
