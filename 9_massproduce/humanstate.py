@@ -5,7 +5,8 @@ import random
 import gui3d
 import gui
 from core import G
-
+from .modifiergroups import ModifierInfo
+import re
 import material
 
 from .randomizeaction import RandomizeAction
@@ -34,11 +35,14 @@ class HumanState():
 
         self._fillMacroModifierValues()
 
+        self.modifierInfo = ModifierInfo()
+
         if not settings is None:
             self._randomizeMacros()
             if settings.getValue("materials", "randomizeSkinMaterials"):
                 self._randomizeSkin()
             self._randomizeProxies()
+            self._randomizeDetails()
 
     def _fillMacroModifierValues(self):
         for group in MACROGROUPS.keys():
@@ -73,6 +77,48 @@ class HumanState():
     def _dichotomous(self, valuesHash, modifierList):
         for n in modifierList:
             valuesHash[n] = float(random.randrange(2))
+
+    def _randomizeModifierGroup(self, modifierGroup):
+        mfi = self.modifierInfo.getModifierInfoForGroup(modifierGroup)
+        maxdev = self.settings.getValue("modeling","maxdev")
+        for mi in mfi:
+            modifier = mi["modifier"]
+            default = float(mi["defaultValue"])
+            twosided = mi["twosided"]
+
+            min = default - maxdev
+            max = default + maxdev
+            adjust = self.getNormalRandomValue(min, max, default)
+
+            if not twosided and default < 0.01:
+                adjust = abs(adjust)
+
+            newval = default + adjust
+
+            if newval > 1.0:
+                newval = 1.0
+
+            if twosided:
+                if newval < -1.0:
+                    newval = -1.0
+            else:
+                if newval < 0.0:
+                    newval = 0.0
+
+            modifier.setValue(newval)
+
+            if mi["leftright"]:
+                sname = modifier.getSymmetricOpposite()
+                smod = self.human.getModifier(sname)
+                smod.setValue(newval)
+
+
+    def _randomizeDetails(self):
+        names = self.settings.getNames("modeling")
+        nondetail = ["maxdev","symmetry"]
+        for name in names:
+            if not name in nondetail and self.settings.getValue("modeling",name):
+                self._randomizeModifierGroup(name)
 
     def _randomizeMacros(self):
 
