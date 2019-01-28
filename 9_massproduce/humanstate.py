@@ -32,6 +32,7 @@ class HumanState():
         self.hair = mhapi.assets.getEquippedHair()
         self.eyebrows = mhapi.assets.getEquippedEyebrows()
         self.eyelashes = mhapi.assets.getEquippedEyelashes()
+        self.clothes = mhapi.assets.getEquippedClothes()
 
         self._fillMacroModifierValues()
 
@@ -73,6 +74,11 @@ class HumanState():
         pickedVal = random.randrange(num)
         pickedName = modifierList[pickedVal]
         valuesHash[pickedName] = 1.0
+
+    def _pickOneFromArray(self, values):
+        num = len(values)
+        pickedVal = random.randrange(num)
+        return values[pickedVal]
 
     def _dichotomous(self, valuesHash, modifierList):
         for n in modifierList:
@@ -250,15 +256,42 @@ class HumanState():
         fullPath = self._findEyelashesForGender(gender)
         self.eyelashes = fullPath
 
+    def _getAllowedClothesForPartAndGender(self,part,gender):
+
+        gender = gender.lower()
+        part = part.lower().capitalize()
+
+        if "shoes" not in part.lower():
+            part = part + "Clothes"
+
+        setName = "allowed" + part
+        allNames = list(self.settings.getNames(setName))
+
+        allowedPaths = []
+        for name in allNames:
+            if self.settings.getValue(setName,name,gender):
+                allowedPaths.append(self.settings.getValue(setName,name,"fullPath"))
+        return allowedPaths
+
+    def _randomizeFullClothes(self):
+        allowed = self._getAllowedClothesForPartAndGender("full", self._getCurrentGender())
+        picked = self._pickOneFromArray(allowed)
+        self.clothes.append(picked)
 
     def _randomizeUpperClothes(self):
-        pass
+        allowed = self._getAllowedClothesForPartAndGender("upper", self._getCurrentGender())
+        picked = self._pickOneFromArray(allowed)
+        self.clothes.append(picked)
 
     def _randomizeLowerClothes(self):
-        pass
+        allowed = self._getAllowedClothesForPartAndGender("lower", self._getCurrentGender())
+        picked = self._pickOneFromArray(allowed)
+        self.clothes.append(picked)
 
     def _randomizeShoes(self):
-        pass
+        allowed = self._getAllowedClothesForPartAndGender("shoes", self._getCurrentGender())
+        picked = self._pickOneFromArray(allowed)
+        self.clothes.append(picked)
 
     def _randomizeProxies(self):
         if self.settings.getValue("proxies","hair"):
@@ -267,6 +300,27 @@ class HumanState():
             self._randomizeEyebrows()
         if self.settings.getValue("proxies","eyelashes"):
             self._randomizeEyelashes()
+
+        for k in ["fullClothes","upperClothes","lowerClothes","shoes"]:
+            if self.settings.getValue("proxies",k):
+                self.clothes = []
+
+        if self.settings.getValue("proxies","fullClothes"):
+            self._randomizeFullClothes()
+
+        if self.settings.getValue("proxies","upperClothes"):
+            self._randomizeUpperClothes()
+
+        if self.settings.getValue("proxies","lowerClothes"):
+            self._randomizeLowerClothes()
+
+        if self.settings.getValue("proxies","shoes"):
+            self._randomizeShoes()
+
+    def equipClothes(self):
+        mhapi.assets.unequipAllClothes()
+        for c in self.clothes:
+            mhapi.assets.equipClothes(c)
 
     def applyState(self, assumeBodyReset=False):
 
@@ -279,6 +333,8 @@ class HumanState():
         mhapi.assets.equipEyelashes(self.eyelashes)
 
         mhapi.modifiers._threadSafeApplyAllTargets()
+
+        self.equipClothes()
 
     def _applyMacroModifiers(self):
         for group in MACROGROUPS.keys():

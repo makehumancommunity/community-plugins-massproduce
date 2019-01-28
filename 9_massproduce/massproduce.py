@@ -115,7 +115,7 @@ class MassProduceTaskView(gui3d.TaskView):
         "male casualsuit01",        
         "male casualsuit03"]
 
-        femaleFullKeyword = ["gown","dress","swimsuit","wetsuit"]
+        femaleFullKeyword = ["gown","dress","swimsuit"]
         maleFullKeyword = ["wetsuit"]
         
         femaleUpperExplicit = []
@@ -813,7 +813,7 @@ class MassProduceTaskView(gui3d.TaskView):
     def _onProduceClick(self):
         #print("Produce")
 
-        self.randomizationSettings.dumpValues()
+        #self.randomizationSettings.dumpValues()
 
         self.initialState = HumanState()
 
