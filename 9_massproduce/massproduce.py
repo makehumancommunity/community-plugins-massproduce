@@ -504,8 +504,8 @@ class MassProduceTaskView(gui3d.TaskView):
         self.modelingPanel.addWidget(mhapi.ui.createLabel())
         r.addUI("modeling", "maxdev", self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.3, min=0.0, max=1.0, label="Max deviation from default")))
 
-        self.modelingPanel.addWidget(mhapi.ui.createLabel())
-        r.addUI("modeling", "symmetry", self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.7, min=0.0, max=1.0, label="Symmetry")))
+        #self.modelingPanel.addWidget(mhapi.ui.createLabel())
+        #r.addUI("modeling", "symmetry", self.modelingPanel.addWidget(mhapi.ui.createSlider(value=0.7, min=0.0, max=1.0, label="Symmetry")))
 
         return self.modelingPanel
 
