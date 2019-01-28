@@ -54,6 +54,7 @@ class MassProduceTaskView(gui3d.TaskView):
         self._setupAllowedHairTable(self.mainSettingsLayout, r)
         self._setupAllowedEyebrowsTable(self.mainSettingsLayout, r)
         self._setupAllowedEyelashesTable(self.mainSettingsLayout, r)
+        self._setupClothesTables(self.mainSettingsLayout, r)
 
         self.mainSettingsLayout.addStretch()
         self.mainSettingsPanel.setLayout(self.mainSettingsLayout)
@@ -81,8 +82,9 @@ class MassProduceTaskView(gui3d.TaskView):
         layout.addWidget(r.addUI("proxies", "hair", mhapi.ui.createCheckBox(label="Randomize hair", selected=True)))
         layout.addWidget(r.addUI("proxies", "eyelashes", mhapi.ui.createCheckBox(label="Randomize eyelashes", selected=True)))
         layout.addWidget(r.addUI("proxies", "eyebrows", mhapi.ui.createCheckBox(label="Randomize eyebrows", selected=True)))
-        layout.addWidget(r.addUI("proxies", "upperClothes", mhapi.ui.createCheckBox(label="Randomize upper / full body clothes", selected=True)))
-        layout.addWidget(r.addUI("proxies", "lowerClothes", mhapi.ui.createCheckBox(label="Randomize lower body clothes", selected=True)))
+        layout.addWidget(r.addUI("proxies", "fullClothes", mhapi.ui.createCheckBox(label="Randomize full body clothes", selected=True)))
+        layout.addWidget(r.addUI("proxies", "upperClothes", mhapi.ui.createCheckBox(label="Randomize upper body clothes", selected=False)))
+        layout.addWidget(r.addUI("proxies", "lowerClothes", mhapi.ui.createCheckBox(label="Randomize lower body clothes", selected=False)))
         layout.addWidget(r.addUI("proxies", "shoes", mhapi.ui.createCheckBox(label="Randomize shoes", selected=True)))
         layout.addWidget(mhapi.ui.createLabel())
 
@@ -90,6 +92,268 @@ class MassProduceTaskView(gui3d.TaskView):
         table.setColumnWidth(0, DEFAULT_LABEL_COLUMN_WIDTH)
         table.setMinimumHeight(DEFAULT_TABLE_HEIGHT - 50)
         table.setMaximumHeight(DEFAULT_TABLE_HEIGHT)
+
+    def _setupClothesTables(self, layout, r):
+        sysClothes = mhapi.assets.getAvailableSystemClothes()
+        userClothes = mhapi.assets.getAvailableUserClothes()
+
+        allClothes = []
+        allClothes.extend(sysClothes)
+        allClothes.extend(userClothes)
+        
+        femaleFullExplicit = ["female elegantsuit01",
+        "female casualsuit02",
+        "female casualsuit01",
+        "female sportsuit01"]
+        
+        maleFullExplicit = ["male worksuit01",
+        "male elegantsuit01",        
+        "male casualsuit06",
+        "male casualsuit05",
+        "male casualsuit04",
+        "male casualsuit02",       
+        "male casualsuit01",        
+        "male casualsuit03"]
+
+        femaleFullKeyword = ["gown","dress","swimsuit","wetsuit"]
+        maleFullKeyword = ["wetsuit"]
+        
+        femaleUpperExplicit = []
+        maleUpperExplicit = []
+        femaleUpperKeyword = ["bra","top","shirt","sweater"]
+        maleUpperKeyword = ["top","shirt","sweater"]
+
+        femaleLowerExplicit = []
+        maleLowerExplicit = []
+        femaleLowerKeyword = ["skirt","jeans","string","shorts","pants"]
+        maleLowerKeyword = ["jeans","shorts","pants","trunk"]
+
+        femaleShoesExplicit = []
+        maleShoesExplicit = []
+        femaleShoesKeyword = ["boot","shoe","sneaker","sock"]
+        maleShoesKeyword = ["boot","shoe","sneaker","sock"]        
+
+        clothesInfos = dict()
+        allNames = []
+        for fullPath in allClothes:
+            bn = os.path.basename(fullPath).lower()
+            bn = re.sub(r'.mhclo', '', bn)
+            bn = re.sub(r'.mhpxy', '', bn)
+            bn = re.sub(r'_', ' ', bn)
+            bn = bn.strip()
+
+            name = bn
+
+            clothesInfo = dict()
+            clothesInfo["fullPath"] = fullPath
+            clothesInfo["name"] = name
+
+            clothesInfo["maleFull"] = False
+            clothesInfo["femaleFull"] = False
+            
+            clothesInfo["maleUpper"] = False
+            clothesInfo["femaleUpper"] = False
+            
+            clothesInfo["maleLower"] = False
+            clothesInfo["femaleLower"] = False
+            
+            clothesInfo["maleShoes"] = False
+            clothesInfo["femaleShoes"] = False
+
+            clothesInfo["mixedFull"] = False
+            clothesInfo["mixedUpper"] = False
+            clothesInfo["mixedLower"] = False
+            clothesInfo["mixedShoes"] = False
+            
+            if not "female" in name:
+                if name in maleFullExplicit:
+                    clothesInfo["maleFull"] = True
+                for k in maleFullKeyword:
+                    if k in name:
+                        clothesInfo["maleFull"] = True
+
+                if name in maleUpperExplicit:
+                    clothesInfo["maleUpper"] = True
+                for k in maleUpperKeyword:
+                    if k in name:
+                        clothesInfo["maleUpper"] = True
+
+                if name in maleLowerExplicit:
+                    clothesInfo["maleLower"] = True
+                for k in maleLowerKeyword:
+                    if k in name:
+                        clothesInfo["maleLower"] = True
+
+                if name in maleShoesExplicit:
+                    clothesInfo["maleShoes"] = True
+                for k in maleShoesKeyword:
+                    if k in name:
+                        clothesInfo["maleShoes"] = True
+
+            if name in femaleFullExplicit:
+                clothesInfo["femaleFull"] = True
+            for k in femaleFullKeyword:
+                if k in name:
+                    clothesInfo["femaleFull"] = True
+
+            if name in femaleUpperExplicit:
+                clothesInfo["femaleUpper"] = True
+            for k in femaleUpperKeyword:
+                if k in name:
+                    clothesInfo["femaleUpper"] = True
+
+            if name in femaleLowerExplicit:
+                clothesInfo["femaleLower"] = True
+            for k in femaleLowerKeyword:
+                if k in name:
+                    clothesInfo["femaleLower"] = True
+
+            if name in femaleShoesExplicit:
+                clothesInfo["femaleShoes"] = True
+            for k in femaleShoesKeyword:
+                if k in name:
+                    clothesInfo["femaleShoes"] = True
+
+            clothesInfo["mixedFull"] = clothesInfo["femaleFull"] or clothesInfo["maleFull"]
+            clothesInfo["mixedUpper"] = clothesInfo["femaleUpper"] or clothesInfo["maleUpper"]
+            clothesInfo["mixedLower"] = clothesInfo["femaleLower"] or clothesInfo["maleLower"]
+            clothesInfo["mixedShoes"] = clothesInfo["femaleShoes"] or clothesInfo["maleShoes"]
+
+            clothesInfos[name] = clothesInfo
+            allNames.append(name)
+
+        allNames.sort()
+
+        # part = ["Full","Upper","Lower","Shoes"]
+        # gender = ["male","female"]
+        # with open("/tmp/table.html","w") as f:
+        #     f.write("<html>\n<body>\n<table>\n")
+        #     f.write("<tr><td><b>Name</b></td>")
+        #
+        #     for p in part:
+        #         for g in gender:
+        #             f.write("<td><b>" + g + p + "</b></td>")
+        #     f.write("</tr>\n")
+        #     for name in allNames:
+        #         f.write("<tr>")
+        #         i = clothesInfos[name]
+        #         f.write("<tr><td>" + name + "</td>")
+        #         for p in part:
+        #             for g in gender:
+        #                 if i[g+p]:
+        #                     f.write("<td>XXX</td>")
+        #                 else:
+        #                     f.write("<td>---</td>")
+        #         f.write("</tr>\n")
+        #
+        #     f.write("</body></html>")
+
+
+        self.allowedFullTable = QTableWidget()
+        self.allowedFullTable.setRowCount(len(allNames))
+        self.allowedFullTable.setColumnCount(4)
+        self.allowedFullTable.setHorizontalHeaderLabels(["Clothes", "Mixed", "Female", "Male"])
+
+        self.allowedUpperTable = QTableWidget()
+        self.allowedUpperTable.setRowCount(len(allNames))
+        self.allowedUpperTable.setColumnCount(4)
+        self.allowedUpperTable.setHorizontalHeaderLabels(["Clothes", "Mixed", "Female", "Male"])
+
+        self.allowedLowerTable = QTableWidget()
+        self.allowedLowerTable.setRowCount(len(allNames))
+        self.allowedLowerTable.setColumnCount(4)
+        self.allowedLowerTable.setHorizontalHeaderLabels(["Clothes", "Mixed", "Female", "Male"])
+
+        self.allowedShoesTable = QTableWidget()
+        self.allowedShoesTable.setRowCount(len(allNames))
+        self.allowedShoesTable.setColumnCount(4)
+        self.allowedShoesTable.setHorizontalHeaderLabels(["Clothes", "Mixed", "Female", "Male"])
+
+        i = 0
+        for name in allNames:
+
+            info = clothesInfos[name]
+
+            self.allowedFullTable.setItem(i, 0, QTableWidgetItem(name))
+            self.allowedUpperTable.setItem(i, 0, QTableWidgetItem(name))
+            self.allowedLowerTable.setItem(i, 0, QTableWidgetItem(name))
+            self.allowedShoesTable.setItem(i, 0, QTableWidgetItem(name))
+
+            miF = r.addUI("allowedFullClothes", name, mhapi.ui.createCheckBox(""), subName="mixed")
+            maF = r.addUI("allowedFullClothes", name, mhapi.ui.createCheckBox(""), subName="male")
+            feF = r.addUI("allowedFullClothes", name, mhapi.ui.createCheckBox(""), subName="female")
+
+            miU = r.addUI("allowedUpperClothes", name, mhapi.ui.createCheckBox(""), subName="mixed")
+            maU = r.addUI("allowedUpperClothes", name, mhapi.ui.createCheckBox(""), subName="male")
+            feU = r.addUI("allowedUpperClothes", name, mhapi.ui.createCheckBox(""), subName="female")
+
+            miL = r.addUI("allowedLowerClothes", name, mhapi.ui.createCheckBox(""), subName="mixed")
+            maL = r.addUI("allowedLowerClothes", name, mhapi.ui.createCheckBox(""), subName="male")
+            feL = r.addUI("allowedLowerClothes", name, mhapi.ui.createCheckBox(""), subName="female")
+
+            miS = r.addUI("allowedShoes", name, mhapi.ui.createCheckBox(""), subName="mixed")
+            maS = r.addUI("allowedShoes", name, mhapi.ui.createCheckBox(""), subName="male")
+            feS = r.addUI("allowedShoes", name, mhapi.ui.createCheckBox(""), subName="female")
+
+            self.allowedFullTable.setCellWidget(i, 1, miF)
+            self.allowedFullTable.setCellWidget(i, 2, feF)
+            self.allowedFullTable.setCellWidget(i, 3, maF)
+
+            self.allowedUpperTable.setCellWidget(i, 1, miU)
+            self.allowedUpperTable.setCellWidget(i, 2, feU)
+            self.allowedUpperTable.setCellWidget(i, 3, maU)
+
+            self.allowedLowerTable.setCellWidget(i, 1, miL)
+            self.allowedLowerTable.setCellWidget(i, 2, feL)
+            self.allowedLowerTable.setCellWidget(i, 3, maL)
+
+            self.allowedShoesTable.setCellWidget(i, 1, miS)
+            self.allowedShoesTable.setCellWidget(i, 2, feS)
+            self.allowedShoesTable.setCellWidget(i, 3, maS)
+
+            r.addUI("allowedFullClothes", name, info["fullPath"], subName="fullPath")
+            r.addUI("allowedUpperClothes", name, info["fullPath"], subName="fullPath")
+            r.addUI("allowedLowerClothes", name, info["fullPath"], subName="fullPath")
+            r.addUI("allowedShoes", name, info["fullPath"], subName="fullPath")
+
+            miF.setChecked(info["mixedFull"])
+            maF.setChecked(info["maleFull"])
+            feF.setChecked(info["femaleFull"])
+
+            miU.setChecked(info["mixedUpper"])
+            maU.setChecked(info["maleUpper"])
+            feU.setChecked(info["femaleUpper"])
+
+            miL.setChecked(info["mixedLower"])
+            maL.setChecked(info["maleLower"])
+            feL.setChecked(info["femaleLower"])
+
+            miS.setChecked(info["mixedShoes"])
+            maS.setChecked(info["maleShoes"])
+            feS.setChecked(info["femaleShoes"])
+
+            i = i + 1
+
+        self._generalMainTableSettings(self.allowedFullTable)
+        self._generalMainTableSettings(self.allowedUpperTable)
+        self._generalMainTableSettings(self.allowedLowerTable)
+        self._generalMainTableSettings(self.allowedShoesTable)
+
+        layout.addWidget(mhapi.ui.createLabel(""))
+        layout.addWidget(mhapi.ui.createLabel("Allowed full body clothes:"))
+        layout.addWidget(self.allowedFullTable)
+
+        layout.addWidget(mhapi.ui.createLabel(""))
+        layout.addWidget(mhapi.ui.createLabel("Allowed upper body clothes:"))
+        layout.addWidget(self.allowedUpperTable)
+
+        layout.addWidget(mhapi.ui.createLabel(""))
+        layout.addWidget(mhapi.ui.createLabel("Allowed lower body clothes:"))
+        layout.addWidget(self.allowedLowerTable)
+
+        layout.addWidget(mhapi.ui.createLabel(""))
+        layout.addWidget(mhapi.ui.createLabel("Allowed shoes:"))
+        layout.addWidget(self.allowedShoesTable)
 
     def _setupAllowedHairTable(self, layout, r):
         sysHair = mhapi.assets.getAvailableSystemHair()
@@ -321,8 +585,8 @@ class MassProduceTaskView(gui3d.TaskView):
         allowedFemaleSkins = dict()
         allowedMaleSkins = dict()
 
-        pp.pprint(sysSkins)
-        pp.pprint(userSkins)
+        #pp.pprint(sysSkins)
+        #pp.pprint(userSkins)
 
         skinBaseNames = []
         for s in sysSkins:
@@ -547,7 +811,7 @@ class MassProduceTaskView(gui3d.TaskView):
         return self.macroPanel
 
     def _onProduceClick(self):
-        print("Produce")
+        #print("Produce")
 
         self.randomizationSettings.dumpValues()
 
