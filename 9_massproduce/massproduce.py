@@ -5,7 +5,7 @@ import random
 import gui3d
 import gui
 from core import G
-
+from progress import Progress
 from .randomizeaction import RandomizeAction
 from .randomizationsettings import RandomizationSettings
 from .humanstate import HumanState
@@ -722,7 +722,7 @@ class MassProduceTaskView(gui3d.TaskView):
         r.addUI("output", "fnbase", self.exportPanel.addWidget(mhapi.ui.createTextEdit("mass")))
         self.exportPanel.addWidget(mhapi.ui.createLabel(""))
 
-        data = ["MHM","OBJ","MHX","FBX","DAE"]
+        data = ["MHM","OBJ","MHX2","FBX","DAE"]
 
         self.exportPanel.addWidget(mhapi.ui.createLabel("File format"))
         r.addUI("output", "fileformat", self.exportPanel.addWidget(mhapi.ui.createComboBox(data=data)))
@@ -820,19 +820,43 @@ class MassProduceTaskView(gui3d.TaskView):
         i = int(self.randomizationSettings.getValue("output","numfiles"))
         base = self.randomizationSettings.getValue("output","fnbase")
 
+        max = i
+
+        prog = Progress()
+
         while i > 0:
+            prg = float(max - i + 1) / float(max)
+            prgStr = str( max - i + 1) + " / " + str(max)
+            prog(prg, desc="Randomizing " + prgStr)
             self.nextState = HumanState(self.randomizationSettings)
             self.nextState.applyState(False)
             format = self.randomizationSettings.getValue("output","fileformat")
             name = base + str(i).rjust(4,"0")
 
+            prog(prg, desc="Exporting " + prgStr)
+
             if format == "MHM":
                 path = mhapi.locations.getUserHomePath("models")
                 name = name + ".mhm"
                 self.human.save(os.path.join(path,name))
-            else:
-                path = mhapi.locations.getUserHomePath("exports")
+            if format == "OBJ":
+                mhapi.exports.exportAsOBJ(name + ".obj")
+            if format == "DAE":
+                mhapi.exports.exportAsDAE(name + ".dae")
+            if format == "FBX":
+                mhapi.exports.exportAsFBX(name + ".fbx")
+            if format == "MHX2" or format == "MHX":
+                mhapi.exports.exportAsMHX2(name + ".mhx2")
+
+            prog(prg, desc="Evaluating")
 
             i = i - 1
             self.initialState.applyState(True)
             self.human.applyAllTargets()
+
+        self.msg = QMessageBox()
+        self.msg.setIcon(QMessageBox.Information)
+        self.msg.setText("Done!")
+        self.msg.setWindowTitle("Produce")
+        self.msg.setStandardButtons(QMessageBox.Ok)
+        self.msg.show()
