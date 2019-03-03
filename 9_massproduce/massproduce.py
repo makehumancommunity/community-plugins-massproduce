@@ -837,6 +837,8 @@ class MassProduceTaskView(gui3d.TaskView):
 
             if format == "MHM":
                 path = mhapi.locations.getUserHomePath("models")
+                if not os.path.exists(path):
+                    os.makedirs(path)
                 name = name + ".mhm"
                 self.human.save(os.path.join(path,name))
             if format == "OBJ":
