@@ -84,22 +84,27 @@ class HumanState():
         for n in modifierList:
             valuesHash[n] = float(random.randrange(2))
 
-    def _randomizeModifierGroup(self, modifierGroup):
+    def _randomizeModifierGroup(self, modifierGroup, debug=False):
+        if debug:
+            print("RANDOMIZING " + modifierGroup)
         mfi = self.modifierInfo.getModifierInfoForGroup(modifierGroup)
         maxdev = self.settings.getValue("modeling","maxdev")
         for mi in mfi:
+            print(mi)
             modifier = mi["modifier"]
             default = float(mi["defaultValue"])
             twosided = mi["twosided"]
 
             min = default - maxdev
             max = default + maxdev
-            adjust = self.getNormalRandomValue(min, max, default)
+            newval = self.getNormalRandomValue(min, max, default)
 
-            if not twosided and default < 0.01:
-                adjust = abs(adjust)
-
-            newval = default + adjust
+            if debug:
+                print("DEFAULT: " + str(default))
+                print("MAXDEV: " + str(maxdev))
+                print("MIN: " + str(min))
+                print("MAX: " + str(max))
+                print("NEWVAL: " + str(newval))
 
             if newval > 1.0:
                 newval = 1.0
@@ -113,6 +118,9 @@ class HumanState():
 
             modifier.setValue(newval)
 
+            if debug:
+                print("SETTING " + str(modifier) + " to " + str(newval))
+
             if mi["leftright"]:
                 sname = modifier.getSymmetricOpposite()
                 smod = self.human.getModifier(sname)
@@ -124,7 +132,14 @@ class HumanState():
         nondetail = ["maxdev","symmetry"]
         for name in names:
             if not name in nondetail and self.settings.getValue("modeling",name):
-                self._randomizeModifierGroup(name)
+                if name == "breast":
+                    self._randomizeBreasts()
+                else:
+                    self._randomizeModifierGroup(name)
+
+    def _randomizeBreasts(self):
+        if self._getCurrentGender() == "female":
+            self._randomizeModifierGroup("breast",False)
 
     def _randomizeMacros(self):
 
@@ -155,10 +170,11 @@ class HumanState():
                 self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["ethnicity"], 0.0, 1.0)
 
         if self.settings.getValue("macro", "gender"):
+            key = MACROGROUPS["gender"][0]
             if self.settings.getValue("macro", "genderabsolute"):
-                self._dichotomous(self.macroModifierValues, MACROGROUPS["gender"])
+                self.macroModifierValues[key] = float(random.randrange(2))
             else:
-                self._randomizeOneSidedMaxMin(self.macroModifierValues, MACROGROUPS["gender"], 0.0, 1.0)
+                self.macroModifierValues[key] = random.random()
 
     def _getCurrentEthnicity(self):
         for ethn in MACROGROUPS["ethnicity"]:
